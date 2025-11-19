@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-
+                    
                 }
             }
         }
@@ -144,7 +144,7 @@ fun PermissionItem(
             if (!isGranted) {
                 if (isPermanentlyDenied) {
                     Button(
-                        onClick = {  },
+                        onClick = { openAppSettings(context) },
                         colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -175,4 +175,11 @@ fun PermissionItem(
             }
         }
     }
+}
+
+fun openAppSettings(context: Context) {
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = Uri.fromParts("package", context.packageName, null)
+    }
+    context.startActivity(intent)
 }
