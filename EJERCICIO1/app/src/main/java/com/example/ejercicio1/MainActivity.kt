@@ -112,7 +112,19 @@ fun UserCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-
+            Button(
+                onClick = {
+                    isFollowing = !isFollowing
+                    onFollowClick(isFollowing)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isFollowing) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.primary,
+                    contentColor = if (isFollowing) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Text(text = if (isFollowing) "Dejar de seguir" else "Seguir")
+            }
         }
     }
 }
