@@ -51,6 +51,15 @@ class FibonacciViewModel : ViewModel() {
     fun generarSerie(inputText: String) {
         val n = inputText.toIntOrNull()
 
+        if (n == null || n <= 0) {
+            sendError("Por favor ingresa un número entero mayor a 0")
+            return
+        }
+
+        if (n > 35) {
+            sendError("N es muy alto para cálculo recursivo, intenta < 35")
+            return
+        }
 
         viewModelScope.launch {
             _isLoading.value = true
@@ -64,6 +73,12 @@ class FibonacciViewModel : ViewModel() {
 
             _fibonacciState.value = resultado
             _isLoading.value = false
+        }
+    }
+
+    private fun sendError(message: String) {
+        viewModelScope.launch {
+            _snackbarChannel.send(message)
         }
     }
 
