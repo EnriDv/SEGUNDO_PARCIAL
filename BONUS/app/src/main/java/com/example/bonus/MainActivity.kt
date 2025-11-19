@@ -144,6 +144,27 @@ fun FibonacciScreen(viewModel: FibonacciViewModel) {
                 modifier = Modifier.fillMaxWidth()
             )
 
+            Button(
+                onClick = {
+                    keyboardController?.hide()
+                    viewModel.generarSerie(inputText)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Calculando...")
+                } else {
+                    Text("Generar Serie")
+                }
+            }
+
 
         }
     }
