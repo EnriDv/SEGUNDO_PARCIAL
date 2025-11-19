@@ -33,7 +33,11 @@ class MainActivity : ComponentActivity() {
 
         val viewModel = ViewModelProvider(this)[FibonacciViewModel::class.java]
 
-
+        setContent {
+            MaterialTheme {
+                FibonacciScreen(viewModel = viewModel)
+            }
+        }
     }
 }
 
@@ -88,3 +92,59 @@ class FibonacciViewModel : ViewModel() {
     }
 }
 
+@Composable
+fun FibonacciScreen(viewModel: FibonacciViewModel) {
+    val serieResultado by viewModel.fibonacciState.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    var inputText by remember { mutableStateOf("") }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(key1 = true) {
+        viewModel.snackbarEvents.collect { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                withDismissAction = true
+            )
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(24.dp)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            Text(
+                text = "Generador Fibonacci",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            OutlinedTextField(
+                value = inputText,
+                onValueChange = {
+                    if (it.all { char -> char.isDigit() }) {
+                        inputText = it
+                    }
+                },
+                label = { Text("Número de términos (N)") },
+                placeholder = { Text("Ej: 5") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+
+        }
+    }
+}
