@@ -33,11 +33,7 @@ class MainActivity : ComponentActivity() {
 
         val viewModel = ViewModelProvider(this)[FibonacciViewModel::class.java]
 
-        setContent {
-            MaterialTheme {
-                FibonacciScreen(viewModel = viewModel)
-            }
-        }
+
     }
 }
 
@@ -55,15 +51,6 @@ class FibonacciViewModel : ViewModel() {
     fun generarSerie(inputText: String) {
         val n = inputText.toIntOrNull()
 
-        if (n == null || n <= 0) {
-            sendError("Por favor ingresa un número entero mayor a 0")
-            return
-        }
-
-        if (n > 35) {
-            sendError("N es muy alto para cálculo recursivo, intenta < 35")
-            return
-        }
 
         viewModelScope.launch {
             _isLoading.value = true
@@ -80,113 +67,9 @@ class FibonacciViewModel : ViewModel() {
         }
     }
 
-    private fun sendError(message: String) {
-        viewModelScope.launch {
-            _snackbarChannel.send(message)
-        }
-    }
-
     private fun fibonacciRecursivo(n: Int): Long {
         if (n <= 1) return n.toLong()
         return fibonacciRecursivo(n - 1) + fibonacciRecursivo(n - 2)
     }
 }
 
-@Composable
-fun FibonacciScreen(viewModel: FibonacciViewModel) {
-    val serieResultado by viewModel.fibonacciState.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-
-    var inputText by remember { mutableStateOf("") }
-
-    val snackbarHostState = remember { SnackbarHostState() }
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    LaunchedEffect(key1 = true) {
-        viewModel.snackbarEvents.collect { message ->
-            snackbarHostState.showSnackbar(
-                message = message,
-                withDismissAction = true
-            )
-        }
-    }
-
-    Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        modifier = Modifier.fillMaxSize()
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(24.dp)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            Text(
-                text = "Generador Fibonacci",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            OutlinedTextField(
-                value = inputText,
-                onValueChange = {
-                    if (it.all { char -> char.isDigit() }) {
-                        inputText = it
-                    }
-                },
-                label = { Text("Número de términos (N)") },
-                placeholder = { Text("Ej: 5") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Button(
-                onClick = {
-                    keyboardController?.hide()
-                    viewModel.generarSerie(inputText)
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Calculando...")
-                } else {
-                    Text("Generar Serie")
-                }
-            }
-
-            if (serieResultado.isNotEmpty()) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Resultado:",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = serieResultado,
-                            style = MaterialTheme.typography.bodyLarge,
-                            lineHeight = 24.sp
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
