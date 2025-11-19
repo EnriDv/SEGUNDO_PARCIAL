@@ -38,7 +38,14 @@ class MainActivity : ComponentActivity() {
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-
+                        UserCard(
+                            nombre = "Ingeniero Mecatrónico",
+                            estadoTexto = "Disponible",
+                            fotoUrl = "url_simulada",
+                            onFollowClick = { isFollowing ->
+                                println("Estado cambiado a: $isFollowing")
+                            }
+                        )
 
                     }
                 }
