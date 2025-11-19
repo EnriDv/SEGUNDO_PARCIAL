@@ -3,45 +3,190 @@ package com.example.bonus
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.bonus.ui.theme.BONUSTheme
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
+        val viewModel = ViewModelProvider(this)[FibonacciViewModel::class.java]
+
         setContent {
-            BONUSTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+            MaterialTheme {
+                FibonacciScreen(viewModel = viewModel)
             }
         }
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
+class FibonacciViewModel : ViewModel() {
+
+    private val _fibonacciState = MutableStateFlow("")
+    val fibonacciState: StateFlow<String> = _fibonacciState.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _snackbarChannel = Channel<String>()
+    val snackbarEvents = _snackbarChannel.receiveAsFlow()
+
+    fun generarSerie(inputText: String) {
+        val n = inputText.toIntOrNull()
+
+        if (n == null || n <= 0) {
+            sendError("Por favor ingresa un número entero mayor a 0")
+            return
+        }
+
+        if (n > 35) {
+            sendError("N es muy alto para cálculo recursivo, intenta < 35")
+            return
+        }
+
+        viewModelScope.launch {
+            _isLoading.value = true
+            _fibonacciState.value = ""
+
+            val resultado = withContext(Dispatchers.Default) {
+                (0 until n).map { i ->
+                    fibonacciRecursivo(i)
+                }.joinToString(", ")
+            }
+
+            _fibonacciState.value = resultado
+            _isLoading.value = false
+        }
+    }
+
+    private fun sendError(message: String) {
+        viewModelScope.launch {
+            _snackbarChannel.send(message)
+        }
+    }
+
+    private fun fibonacciRecursivo(n: Int): Long {
+        if (n <= 1) return n.toLong()
+        return fibonacciRecursivo(n - 1) + fibonacciRecursivo(n - 2)
+    }
 }
 
-@Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
-    BONUSTheme {
-        Greeting("Android")
+fun FibonacciScreen(viewModel: FibonacciViewModel) {
+    val serieResultado by viewModel.fibonacciState.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    var inputText by remember { mutableStateOf("") }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(key1 = true) {
+        viewModel.snackbarEvents.collect { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                withDismissAction = true
+            )
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(24.dp)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            Text(
+                text = "Generador Fibonacci",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            OutlinedTextField(
+                value = inputText,
+                onValueChange = {
+                    if (it.all { char -> char.isDigit() }) {
+                        inputText = it
+                    }
+                },
+                label = { Text("Número de términos (N)") },
+                placeholder = { Text("Ej: 5") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Button(
+                onClick = {
+                    keyboardController?.hide()
+                    viewModel.generarSerie(inputText)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Calculando...")
+                } else {
+                    Text("Generar Serie")
+                }
+            }
+
+            if (serieResultado.isNotEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Resultado:",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = serieResultado,
+                            style = MaterialTheme.typography.bodyLarge,
+                            lineHeight = 24.sp
+                        )
+                    }
+                }
+            }
+        }
     }
 }
