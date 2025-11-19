@@ -41,14 +41,39 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    
+                    PermissionsScreen(modifier = Modifier.padding(innerPadding))
                 }
             }
         }
     }
 }
 
+@Composable
+fun PermissionsScreen(modifier: Modifier = Modifier) {
+    val permissionsList = remember {
+        mutableStateListOf(
+            PermissionData(Manifest.permission.ACCESS_FINE_LOCATION, "Ubicación Exacta"),
+        )
+    }
 
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("Gestor de Permisos", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(10.dp))
+
+        permissionsList.forEach { permissionData ->
+            PermissionItem(
+                permission = permissionData.permission,
+                title = permissionData.title
+            )
+        }
+    }
+}
 
 @Composable
 fun PermissionItem(
