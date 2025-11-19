@@ -40,7 +40,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         UserCard(
                             nombre = "Ingeniero Mecatrónico",
-                            estadoTexto = "Disponible",
+                            estadoTexto = "No Siguiendo",
                             fotoUrl = "url_simulada",
                             onFollowClick = { isFollowing ->
                                 println("Estado cambiado a: $isFollowing")
@@ -109,7 +109,7 @@ fun UserCard(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = if(isFollowing) "Conectado" else estadoTexto,
+                            text = if(isFollowing) "Siguiendo" else estadoTexto,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.secondary
                         )
