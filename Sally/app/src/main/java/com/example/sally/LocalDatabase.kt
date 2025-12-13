@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 data class Appointment(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val salonName: String,
-    val salonAddress: String, // Revisa que tengas estos campos nuevos
+    val salonAddress: String,
     val date: Long,
     val time: String,
     val specialistName: String,
@@ -29,7 +29,7 @@ interface AppointmentDao {
     suspend fun cancelAppointment(id: Int)
 }
 
-@Database(entities = [Appointment::class], version = 2) // Versión 2
+@Database(entities = [Appointment::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun appointmentDao(): AppointmentDao
 
