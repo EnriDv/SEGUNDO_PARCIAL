@@ -41,25 +41,20 @@ fun MapScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // Estado de la cámara del mapa
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(targetLocation, 15f)
     }
 
-    // Estado para la ubicación del usuario y distancia
     var userLocation by remember { mutableStateOf<Location?>(null) }
     var distanceText by remember { mutableStateOf("Calculando...") }
 
-    // Cliente de ubicación
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
-    // Launcher de permisos
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
             permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true) {
-            // Permiso concedido, obtenemos ubicación
             try {
                 fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                     userLocation = location
@@ -82,7 +77,6 @@ fun MapScreen(
         }
     }
 
-    // Pedir permiso al iniciar
     LaunchedEffect(Unit) {
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             permissionLauncher.launch(arrayOf(
@@ -90,7 +84,6 @@ fun MapScreen(
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ))
         } else {
-            // Ya tenemos permiso, cargar ubicación
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 userLocation = location
                 if (location != null) {
@@ -125,14 +118,12 @@ fun MapScreen(
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
 
-            // --- EL MAPA ---
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
                 properties = MapProperties(isMyLocationEnabled = userLocation != null), // Muestra punto azul
                 uiSettings = MapUiSettings(zoomControlsEnabled = false)
             ) {
-                // Marcador del Salón
                 Marker(
                     state = MarkerState(position = targetLocation),
                     title = salonName,
@@ -140,7 +131,6 @@ fun MapScreen(
                 )
             }
 
-            // --- TARJETA DE INFORMACIÓN FLOTANTE ---
             Card(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -154,7 +144,6 @@ fun MapScreen(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Icono
                     Box(
                         modifier = Modifier
                             .size(50.dp)

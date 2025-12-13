@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @Composable
 fun SalonProfileScreen(
@@ -34,6 +36,8 @@ fun SalonProfileScreen(
     val currentState by remember { mutableStateOf(initialState) }
     var isModalDismissed by remember { mutableStateOf(false) }
 
+    var selectedService by remember { mutableStateOf<Service?>(null) }
+
     Box(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
 
         Column(
@@ -43,7 +47,19 @@ fun SalonProfileScreen(
                 .alpha(currentState.contentAlpha)
                 .padding(bottom = 100.dp)
         ) {
-
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(Icons.Default.ArrowBackIosNew, contentDescription = null)
+                }
+                Text("Perfil del Salón", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                Row {
+                    IconButton(onClick = {}) { Icon(Icons.Default.Search, contentDescription = null) }
+                }
+            }
 
             Box(
                 modifier = Modifier
@@ -67,6 +83,7 @@ fun SalonProfileScreen(
                     Icon(Icons.Default.LocationOn, contentDescription = null, tint = PurpleStart, modifier = Modifier.size(18.dp))
                     Text(" ${salonData.address}", modifier = Modifier.padding(start = 4.dp), color = GrayText, fontSize = 14.sp)
                 }
+
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Outlined.Schedule, contentDescription = null, tint = PurpleStart, modifier = Modifier.size(18.dp))
@@ -112,21 +129,43 @@ fun SalonProfileScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(mockServices) { service ->
+                    val isSelected = selectedService == service
+
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFCE4EC)),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected) PurpleStart else Color(0xFFFCE4EC)
+                        ),
                         shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.height(110.dp)
+                        modifier = Modifier
+                            .height(110.dp)
+                            .clickable { selectedService = service }
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp).width(100.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            Icon(service.icon, contentDescription = null, tint = PinkEnd, modifier = Modifier.size(28.dp))
+                            Icon(
+                                service.icon,
+                                contentDescription = null,
+                                tint = if (isSelected) Color.White else PinkEnd,
+                                modifier = Modifier.size(28.dp)
+                            )
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(service.name, fontSize = 13.sp, textAlign = TextAlign.Center, lineHeight = 16.sp, maxLines = 2)
+                            Text(
+                                service.name,
+                                fontSize = 13.sp,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 16.sp,
+                                maxLines = 2,
+                                color = if (isSelected) Color.White else Color.Black
+                            )
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(service.price, color = PurpleStart, fontWeight = FontWeight.Bold)
+                            Text(
+                                service.price,
+                                color = if (isSelected) Color.White else PurpleStart,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
@@ -148,9 +187,20 @@ fun SalonProfileScreen(
         ) {
             Button(
                 onClick = {
-                    navController.navigate("booking/${salonData.name}")
+                    if (selectedService != null) {
+                        try {
+                            val encodedSalonName = URLEncoder.encode(salonData.name, StandardCharsets.UTF_8.toString())
+                            val encodedAddress = URLEncoder.encode(salonData.address, StandardCharsets.UTF_8.toString())
+                            val encodedServiceName = URLEncoder.encode(selectedService!!.name, StandardCharsets.UTF_8.toString())
+                            val encodedPrice = URLEncoder.encode(selectedService!!.price, StandardCharsets.UTF_8.toString())
+
+                            navController.navigate("booking/$encodedSalonName/$encodedAddress/$encodedServiceName/$encodedPrice")
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
                 },
-                enabled = currentState.isActionEnabled,
+                enabled = currentState.isActionEnabled && selectedService != null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
@@ -158,10 +208,11 @@ fun SalonProfileScreen(
                 shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = currentState.actionButtonColor,
-                    disabledContainerColor = currentState.actionButtonColor
+                    disabledContainerColor = Color.Gray
                 )
             ) {
-                Text(currentState.actionButtonText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                val buttonText = if (selectedService == null) "Selecciona un servicio" else currentState.actionButtonText
+                Text(buttonText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -190,36 +241,13 @@ fun SalonProfileScreen(
                             ) {
                                 Icon(Icons.Outlined.Schedule, contentDescription = null, tint = Color.White, modifier = Modifier.size(36.dp))
                             }
-
                             Spacer(modifier = Modifier.height(16.dp))
                             Text("Salón Cerrado", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 "Lo sentimos, actualmente estamos cerrados.\nHorario: Lunes a Sábado\n9:00 AM - 8:00 PM",
-                                textAlign = TextAlign.Center,
-                                color = GrayText,
-                                fontSize = 14.sp,
-                                lineHeight = 20.sp
+                                textAlign = TextAlign.Center, color = GrayText, fontSize = 14.sp
                             )
-
-                            Spacer(modifier = Modifier.height(20.dp))
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(Color(0xFFF3E5F5))
-                                    .padding(16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    "¡Vuelve pronto! Estaremos encantados de atenderte.",
-                                    color = PurpleStart,
-                                    textAlign = TextAlign.Center,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
                         }
                     }
                 }

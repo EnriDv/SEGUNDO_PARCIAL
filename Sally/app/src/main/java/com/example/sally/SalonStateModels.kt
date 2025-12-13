@@ -40,19 +40,23 @@ val mockSpecialists = listOf(
 val mockSalons = listOf(
     Salon(
         0, "Luxe Spa & Beauty", "4.8", "(234)", Color(0xFFE1BEE7), false,
-        LatLng(40.785091, -73.968285), "Central Park West, NY"
+        LatLng(-17.783396, -63.182061), // Plaza 24 de Septiembre (Centro)
+        "Calle Ayacucho, Casco Viejo"
     ),
     Salon(
         1, "Elegant Hair Studio", "4.9", "(189)", Color(0xFFB39DDB), true,
-        LatLng(40.758896, -73.985130), "Times Square, NY"
+        LatLng(-17.756185, -63.194165), // Zona Equipetrol (Cerca de Ventura Mall)
+        "Av. San Martín, Equipetrol"
     ),
     Salon(
         2, "Urban Barbershop", "4.7", "(120)", Color(0xFF90CAF9), false,
-        LatLng(40.748817, -73.985428), "Empire State Building, NY"
+        LatLng(-17.771343, -63.168852), // Zona Cine Center (2do Anillo)
+        "Av. El Trompillo, Zona Sur"
     ),
     Salon(
         3, "Natural Glow", "5.0", "(56)", Color(0xFFA5D6A7), true,
-        LatLng(40.7061, -74.0092), "Wall Street, NY"
+        LatLng(-17.733560, -63.168430), // Zona Av. Banzer (Cerca de Las Brisas)
+        "Av. Cristo Redentor, Norte"
     )
 )
 

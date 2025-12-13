@@ -3,7 +3,6 @@ package com.example.sally
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
@@ -42,6 +41,13 @@ fun MainApp() {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
+    val mainRoutes = listOf("home", "favorites", "chats", "profile")
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    val isMainScreen = currentRoute in mainRoutes
+
     val items = listOf(
         Triple("home", "Inicio", Icons.Default.Home),
         Triple("favorites", "Favoritos", Icons.Default.FavoriteBorder),
@@ -51,6 +57,7 @@ fun MainApp() {
 
     ModalNavigationDrawer(
         drawerState = drawerState,
+        gesturesEnabled = isMainScreen,
         drawerContent = {
             ModalDrawerSheet {
                 Spacer(Modifier.height(12.dp))
@@ -64,56 +71,32 @@ fun MainApp() {
     ) {
         Scaffold(
             topBar = {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
-
-                if (currentRoute?.startsWith("salon_profile") == false) {
+                if (isMainScreen) {
                     SalyTopBar(onMenuClick = { scope.launch { drawerState.open() } })
-                }
-                else {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(Icons.Default.ArrowBackIosNew, contentDescription = null)
-                        }
-                        Text("Perfil del Salón", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                        Row {
-                            IconButton(onClick = {}) { Icon(Icons.Default.Search, contentDescription = null) }
-                            IconButton(onClick = {}) {
-                                BadgedBox(badge = { Badge { Text("1") } }) {
-                                    Icon(Icons.Default.Notifications, contentDescription = null)
-                                }
-                            }
-                        }
-                    }
                 }
             },
             bottomBar = {
-                NavigationBar(containerColor = Color.White, tonalElevation = 8.dp) {
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentRoute = navBackStackEntry?.destination?.route
-
-                    items.forEach { (route, label, icon) ->
-                        NavigationBarItem(
-                            icon = { Icon(icon, contentDescription = label) },
-                            label = { Text(label) },
-                            selected = currentRoute == route,
-                            onClick = {
-                                navController.navigate(route) {
-                                    popUpTo(navController.graph.startDestinationId) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = PurpleStart,
-                                selectedTextColor = PurpleStart,
-                                indicatorColor = Color.Transparent
+                if (isMainScreen) {
+                    NavigationBar(containerColor = Color.White, tonalElevation = 8.dp) {
+                        items.forEach { (route, label, icon) ->
+                            NavigationBarItem(
+                                icon = { Icon(icon, contentDescription = label) },
+                                label = { Text(label) },
+                                selected = currentRoute == route,
+                                onClick = {
+                                    navController.navigate(route) {
+                                        popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = PurpleStart,
+                                    selectedTextColor = PurpleStart,
+                                    indicatorColor = Color.Transparent
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }
@@ -134,7 +117,6 @@ fun MainApp() {
                 ) { backStackEntry ->
                     val salonId = backStackEntry.arguments?.getInt("salonId") ?: 0
                     val selectedSalon = mockSalons.find { it.id == salonId } ?: mockSalons[0]
-
                     val initialState = if (selectedSalon.isClosed) ClosedState() else OpenState()
 
                     SalonProfileScreen(
