@@ -24,9 +24,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 
 @Composable
 fun ProfileScreen(navController: NavController) {
@@ -53,13 +55,13 @@ fun ProfileScreen(navController: NavController) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(320.dp)
+                .height(370.dp)
+                .padding(bottom = 24.dp)
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(260.dp)
-                    .clip(RoundedCornerShape(bottomStart = 30.dp, bottomEnd = 30.dp))
                     .background(MainGradient)
             ) {
                 Column(
@@ -242,4 +244,10 @@ fun MenuItem(icon: ImageVector, text: String, subtitle: String, hasSwitch: Boole
             Icon(Icons.Default.ChevronRight, contentDescription = null, tint = GrayText)
         }
     }
+}
+
+@Preview
+@Composable
+fun ProfileScreenPreview() {
+    ProfileScreen(navController = rememberNavController())
 }
